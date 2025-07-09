@@ -7,7 +7,10 @@ class BookController {
         this.router = Router();
         this.router.get('/:id', this.getBook.bind(this));
 
-        this.router.post('/', this.createBook.bind(this));
+        this.router.post('/create', this.createBook.bind(this));
+
+        // get all books
+        this.router.get('/', this.getBooks.bind(this));
     }
 
     getBook(req: Request, res: Response) {
@@ -25,6 +28,10 @@ class BookController {
             error_description: 'Endpoint not implemented yet.',
         });
     }
+
+    getBooks = (req: Request, res: Response): Response => {
+        return res.status(200).json({ status: 'get books' });
+    };
 }
 
 export default new BookController().router;
