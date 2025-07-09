@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { Book } from '../Book';
 
 class BookController {
     router: Router;
@@ -29,8 +30,14 @@ class BookController {
         });
     }
 
-    getBooks = (req: Request, res: Response): Response => {
-        return res.status(200).json({ status: 'get books' });
+    getBooks = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const result = await Book.getAllBooks();
+            res.json({ success: true, books: result });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, error: err.message });
+        }
     };
 }
 
