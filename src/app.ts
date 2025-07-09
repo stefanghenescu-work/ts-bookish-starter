@@ -31,5 +31,9 @@ app.use(express.urlencoded({ extended: true }));
 /**
  * Primary app routes.
  */
+
+app.use(express.json()); // Add this line
+
 app.use('/healthcheck', healthcheckRoutes);
 app.use('/books', bookRoutes);
+

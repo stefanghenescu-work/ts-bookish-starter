@@ -1,5 +1,6 @@
 import { Request } from 'tedious';
 import { ConnectionTedious } from './ConnectionTedious';
+import { TYPES } from 'tedious';
 
 export class Book {
     id: number;
@@ -24,8 +25,6 @@ export class Book {
             ) {
                 if (err) {
                     return reject(err);
-                } else {
-                    console.log(rowCount + ' rows');
                 }
             });
 
@@ -41,7 +40,6 @@ export class Book {
             request.on(
                 'doneProc',
                 function (rowCount, more, returnStatus, rows) {
-                    console.log('onDoneProc');
                     return resolve(allData); //Here we resolve allData using promise in order to get it´s content later
                 },
             );
@@ -52,41 +50,34 @@ export class Book {
         return allData;
     }
 
-
-    static async addBook() {
-        const allData = [];
-        // We now set the promise awaiting it gets results
-        await new Promise((resolve, reject) => {
-            const request = new Request('SELECT * FROM dbo.Books', function (
-                err,
-                rowCount,
-            ) {
-                if (err) {
-                    return reject(err);
-                } else {
-                    console.log(rowCount + ' rows');
-                }
-            });
-
-            request.on('row', function (columns) {
-                columns.forEach(function (column) {
-                    allData.push(column.value); //Push the result to array
-                });
-            });
-
-            request.on(
-                'doneProc',
-                function (rowCount, more, returnStatus, rows) {
-                    console.log('onDoneProc');
-                    return resolve(allData); //Here we resolve allData using promise in order to get it´s content later
+    static async addBook(
+        book_id: number,
+        title: string,
+        ISBN: string,
+        number_copies: number,
+    ) {
+        return new Promise<void>((resolve, reject) => {
+            const request = new Request(
+                `INSERT INTO bookish.dbo.Books (book_id, title, ISBN, number_copies)
+                                         VALUES (@book_id, @title, @ISBN, @number_copies)`,
+                (err: Error, rowCount: number) => {
+                    if (err) {
+                        console.error('Error inserting book:', err);
+                        return reject(err);
+                    } else {
+                        console.log(`Inserted ${rowCount} row(s)`);
+                        return resolve();
+                    }
                 },
             );
 
+            // Add parameters
+            request.addParameter('book_id', TYPES.Int, book_id);
+            request.addParameter('title', TYPES.NVarChar, title);
+            request.addParameter('ISBN', TYPES.NVarChar, ISBN);
+            request.addParameter('number_copies', TYPES.Int, number_copies);
+
             ConnectionTedious.getConnection().execSql(request);
         });
-
-        return allData;
     }
-
-
 }
