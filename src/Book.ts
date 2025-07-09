@@ -1,6 +1,7 @@
 import { Request } from 'tedious';
 import { ConnectionTedious } from './ConnectionTedious';
 import { TYPES } from 'tedious';
+import { Author } from './Author';
 
 export class Book {
     id: number;
@@ -51,15 +52,16 @@ export class Book {
     }
 
     static async addBook(
-        book_id: number,
+        bookID: number,
         title: string,
         ISBN: string,
-        number_copies: number,
+        numberCopies: number,
+        authors: Array<Author>,
     ) {
-        return new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             const request = new Request(
                 `INSERT INTO bookish.dbo.Books (book_id, title, ISBN, number_copies)
-                                         VALUES (@book_id, @title, @ISBN, @number_copies)`,
+                 VALUES (@book_id, @title, @ISBN, @number_copies)`,
                 (err: Error, rowCount: number) => {
                     if (err) {
                         console.error('Error inserting book:', err);
@@ -71,13 +73,44 @@ export class Book {
                 },
             );
 
-            // Add parameters
-            request.addParameter('book_id', TYPES.Int, book_id);
+            request.addParameter('book_id', TYPES.Int, bookID);
             request.addParameter('title', TYPES.NVarChar, title);
             request.addParameter('ISBN', TYPES.NVarChar, ISBN);
-            request.addParameter('number_copies', TYPES.Int, number_copies);
+            request.addParameter('number_copies', TYPES.Int, numberCopies);
 
             ConnectionTedious.getConnection().execSql(request);
         });
+
+        for (const author of authors) {
+            await new Promise<void>((resolve, reject) => {
+                const request = new Request(
+                    `INSERT INTO bookish.dbo.Authors (author_id, author_surname, author_firstname)
+                     VALUES (@author_id, @author_surname, @author_firstname)`,
+                    (err: Error, rowCount: number) => {
+                        if (err) {
+                            console.error('Error inserting author:', err);
+                            return reject(err);
+                        } else {
+                            console.log(`Inserted ${rowCount} row(s)`);
+                            return resolve();
+                        }
+                    },
+                );
+
+                request.addParameter('author_id', TYPES.Int, author.id);
+                request.addParameter(
+                    'author_firstname',
+                    TYPES.NVarChar,
+                    author.firstname,
+                );
+                request.addParameter(
+                    'author_surname',
+                    TYPES.NVarChar,
+                    author.surname,
+                );
+
+                ConnectionTedious.getConnection().execSql(request);
+            });
+        }
     }
 }

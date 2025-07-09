@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Book } from '../Book';
+import { Author } from '../Author';
 
 class BookController {
     router: Router;
@@ -23,11 +24,14 @@ class BookController {
     }
 
     createBook = async (req: Request, res: Response) => {
-        const { book_id, title, ISBN, number_copies } = req.body;
-        console.log(req.body);
-        console.log(book_id, title, ISBN, number_copies);
+        const { book_id, title, ISBN, number_copies, authors } = req.body;
+
+        const authorObjs = (authors || []).map((a: any) => {
+            return new Author(a.id, a.surname, a.firstname);
+        });
+
         try {
-            await Book.addBook(book_id, title, ISBN, number_copies);
+            await Book.addBook(book_id, title, ISBN, number_copies, authorObjs);
             res.json({ success: true, message: 'Book added successfully' });
         } catch (err) {
             console.error(err);
